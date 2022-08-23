@@ -16,17 +16,10 @@ import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import "@chainlink/contracts/src/v0.8/KeeperCompatible.sol";
 
 // Dev imports
-// import "hardhat/console.sol";
+import "hardhat/console.sol";
 
-contract BullBear is
-    ERC721,
-    ERC721Enumerable,
-    ERC721URIStorage,
-    KeeperCompatibleInterface,
-    Ownable
-{
+contract BullBear is ERC721, ERC721Enumerable, ERC721URIStorage, KeeperCompatibleInterface, Ownable {
     using Counters for Counters.Counter;
-
     Counters.Counter private _tokenIdCounter;
     AggregatorV3Interface public pricefeed;
 
@@ -56,15 +49,13 @@ contract BullBear is
 
     // For testing with the mock on Rinkeby, pass in 10(seconds) for `updateInterval` and the address of my
     // deployed  MockPriceFeed.sol contract (0xD753A1c190091368EaC67bbF3Ee5bAEd265aC420).
-    constructor(uint256 updateInterval, address _pricefeed)
-        ERC721("Bull&Bear", "BBTK")
-    {
+    constructor(uint256 updateInterval, address _pricefeed) ERC721("Bull&Bear", "BBTK") {
         // Set the keeper update interval
         interval = updateInterval;
         lastTimeStamp = block.timestamp; //  seconds since unix epoch
 
         // set the price feed address to
-        // BTC/USD Price Feed Contract Address on Polygon: https://etherscan.io/address/0x7bAC85A8a13A4BcD8abb3eB7d6b4d632c5a57676
+        // BTC/USD Price Feed Contract Address on Goerli BTC/USD: https://goerli.etherscan.io/address/0xA39434A63A52E749F02807ae27335515BA4b07F7
         // or the MockPriceFeed Contract
         pricefeed = AggregatorV3Interface(_pricefeed); // To pass in the mock
 
@@ -73,11 +64,11 @@ contract BullBear is
     }
 
     function safeMint(address to) public {
-        // Current counter value will be the minted token's token ID.
-        uint256 tokenId = _tokenIdCounter.current();
-
         // Increment it so next time it's correct when we call .current()
         _tokenIdCounter.increment();
+
+        // Current counter value will be the minted token's token ID.
+        uint256 tokenId = _tokenIdCounter.current();
 
         // Mint the token
         _safeMint(to, tokenId);
@@ -86,26 +77,14 @@ contract BullBear is
         string memory defaultUri = bullUrisIpfs[0];
         _setTokenURI(tokenId, defaultUri);
 
-        // console.log("DONE!!! minted token ", tokenId, " and assigned token url: ", defaultUri);
+        console.log("DONE!!! minted token ", tokenId, " and assigned token url: ", defaultUri);
     }
 
-    function checkUpkeep(
-        bytes calldata /* checkData */
-    )
-        external
-        view
-        override
-        returns (
-            bool upkeepNeeded,
-            bytes memory /*performData */
-        )
-    {
+    function checkUpkeep( bytes calldata /* checkData */ ) external view override returns ( bool upkeepNeeded, bytes memory /*performData */ ){
         upkeepNeeded = (block.timestamp - lastTimeStamp) > interval;
     }
 
-    function performUpkeep(
-        bytes calldata /* performData */
-    ) external override {
+    function performUpkeep( bytes calldata /* performData */ ) external override {
         //We highly recommend revalidating the upkeep in the performUpkeep function
         if ((block.timestamp - lastTimeStamp) > interval) {
             lastTimeStamp = block.timestamp;
@@ -154,13 +133,13 @@ contract BullBear is
     function updateAllTokenUris(string memory trend) internal {
         if (compareStrings("bear", trend)) {
             // console.log(" UPDATING TOKEN URIS WITH ", "bear", trend);
-            for (uint256 i = 0; i < _tokenIdCounter.current(); i++) {
+            for (uint256 i = 1; i < _tokenIdCounter.current(); i++) {
                 _setTokenURI(i, bearUrisIpfs[0]);
             }
         } else {
             // console.log(" UPDATING TOKEN URIS WITH ", "bull", trend);
 
-            for (uint256 i = 0; i < _tokenIdCounter.current(); i++) {
+            for (uint256 i = 1; i < _tokenIdCounter.current(); i++) {
                 _setTokenURI(i, bullUrisIpfs[0]);
             }
         }
@@ -175,46 +154,25 @@ contract BullBear is
         interval = newInterval;
     }
 
-    function compareStrings(string memory a, string memory b)
-        internal
-        pure
-        returns (bool)
-    {
+    function compareStrings(string memory a, string memory b) internal pure returns (bool) {
         return (keccak256(abi.encodePacked((a))) ==
             keccak256(abi.encodePacked((b))));
     }
 
     // The following functions are overrides required by Solidity.
-    function _beforeTokenTransfer(
-        address from,
-        address to,
-        uint256 tokenId
-    ) internal override(ERC721, ERC721Enumerable) {
+    function _beforeTokenTransfer( address from, address to, uint256 tokenId ) internal override(ERC721, ERC721Enumerable) {
         super._beforeTokenTransfer(from, to, tokenId);
     }
 
-    function _burn(uint256 tokenId)
-        internal
-        override(ERC721, ERC721URIStorage)
-    {
+    function _burn(uint256 tokenId) internal override(ERC721, ERC721URIStorage) {
         super._burn(tokenId);
     }
 
-    function tokenURI(uint256 tokenId)
-        public
-        view
-        override(ERC721, ERC721URIStorage)
-        returns (string memory)
-    {
+    function tokenURI(uint256 tokenId) public view override(ERC721, ERC721URIStorage) returns (string memory) {
         return super.tokenURI(tokenId);
     }
 
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        override(ERC721, ERC721Enumerable)
-        returns (bool)
-    {
+    function supportsInterface(bytes4 interfaceId) public view override(ERC721, ERC721Enumerable) returns (bool) {
         return super.supportsInterface(interfaceId);
     }
 }
